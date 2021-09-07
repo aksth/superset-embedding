@@ -1,0 +1,81 @@
+<div class="dashboard-main" *ngIf="dashboardLayoutReady">
+  <div *ngFor="let root of dashboardLayout">
+    <ng-container *ngTemplateOutlet="tree;context:{node:root}"> </ng-container>
+    <ng-template #tree let-node="node">
+      
+      <!-- ROW, GRID & COLUMNS -->
+      <div
+        *ngIf="node.type !== 'TABS' && node.type !== 'TAB' && node.children && node.children.length > 0"
+        [ngClass]="node.type === 'ROW' ? 'row grid-row' 
+        : node.type === 'COLUMN' ? 'col-md-'+node.meta.width + ' dashboard-component-container'
+        : ''"
+      >
+        <ng-container *ngFor="let child of node.children">
+          <ng-container *ngTemplateOutlet="tree;context:{node:child}">
+          </ng-container>
+        </ng-container>
+      </div>
+      
+      <!-- DIVIDER -->
+      <div
+        *ngIf="node.type === 'DIVIDER'"
+      >
+        <hr class="horizontal-line"/>
+        <ng-container *ngFor="let child of node.children">
+          <ng-container *ngTemplateOutlet="tree;context:{node:child}">
+          </ng-container>
+        </ng-container>
+      </div>
+
+      <!-- TAB SELECTORS -->
+      <div
+        *ngIf="node.type === 'TABS' && node.children && node.children.length > 0"
+      >
+        <ul class="nav nav-tabs" [id]="node.id" role="tablist">
+          <li class="nav-item" role="presentation" *ngFor="let tab of node.children; let i = index;">
+            <a [class]="i == 0 ? 'nav-link active' : 'nav-link'" [id]="tab.id+'-tab'" data-toggle="tab" [href]="'#'+tab.id+'-tabpane'" role="tab" [aria-controls]="tab.id+'-tabpane'" [aria-selected]="i == 0 ? true : false">{{tab.meta.text}}</a>
+          </li>
+        </ul>
+        <div class="tab-content">
+          <ng-container *ngFor="let child of node.children">
+            <ng-container *ngTemplateOutlet="tree;context:{node:child}">
+            </ng-container>
+          </ng-container>
+        </div>
+      </div>
+
+      <!-- TAB CONTENT -->
+      <ng-container
+        *ngIf="node.type === 'TAB' && node.children && node.children.length > 0"
+      >
+        <div [class]="node.isFirstChild ? 'tab-pane active' : 'tab-pane'" [id]="node.id+'-tabpane'" role="tabpanel" [aria-labelledby]="node.id+'-tab'">
+          <ng-container *ngFor="let child of node.children">
+            <ng-container *ngTemplateOutlet="tree;context:{node:child}">
+            </ng-container>
+          </ng-container>
+        </div>
+      </ng-container>
+
+      <!-- CHART -->
+      <div
+        *ngIf="node.type === 'CHART'"
+        [ngClass]="node.parent !== 'COLUMN' ? 'col-md-'+node.meta.width + ' dashboard-component-container' : ''"
+      >
+        <div
+          class="dashboard-component-chart-holder"
+          [ngStyle]="{'height': 8*node.meta.height+'px'}"
+        >
+          <div class="chart-header">
+            <span [title]="node.meta.sliceName">{{ node.meta.sliceName }}</span>
+          </div>
+          <app-react-chart
+            [theme]="theme"
+            [formData]="getFormData(node.meta.chartId)"
+            [dashboardId]="dashboardId"
+            [height]="(8*node.meta.height)-54"
+          ></app-react-chart>
+        </div>
+      </div>
+    </ng-template>
+  </div>
+</div>
